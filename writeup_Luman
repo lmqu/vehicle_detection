@@ -1,0 +1,116 @@
+
+**Vehicle Detection Project**
+---
+
+The goals / steps of this project are the following:
+
+* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
+* Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
+* Run your pipeline on a video stream and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
+* Estimate a bounding box for vehicles detected.
+
+[//]: # (Image References)
+[image1]: ./examples/car_not_car.png
+[image2]: ./examples/HOG_example.jpg
+[image3]: ./examples/sliding_windows.jpg
+[image4]: ./examples/sliding_window.jpg
+[image5]: ./examples/bboxes_and_heat.png
+[image6]: ./examples/labels_map.png
+[image7]: ./examples/output_bboxes.png
+[video1]: ./project_video.mp4
+
+## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
+###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+---
+###Writeup / README
+
+####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  
+
+You're reading it!
+
+###Histogram of Oriented Gradients (HOG)
+
+####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+
+The code for this step is contained in the first code cell of the IPython notebook.  
+
+I started by reading in all the `cars` and `non-cars` images.  Here is an example of the `cars` and `non-cars` classes. The first row shows examples of cars, while the second row shows examples of non-cars.
+
+<center><img src="./output_images/1.png" width="800" /> </center>
+
+I then used `skimage.feature.hog`  function to extract the hog features of the images. Examples: 
+
+
+<center><img src="./output_images/2.png" width="800" /> </center>
+
+####2. Explain how you settled on your final choice of HOG parameters.
+
+I tried various combinations of parameters and found the following combinations works very well.
+
+
+```python
+color_space = 'GRAY' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+orient = 8  # HOG orientations
+pix_per_cell = 16 # HOG pixels per cell
+cell_per_block = 1 # HOG cells per block
+hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
+spatial_size = (16, 16) # Spatial binning dimensions
+hist_bins = 16    # Number of histogram bins
+spatial_feat = False # Spatial features on or off
+hist_feat = False # Histogram features on or off
+hog_feat = True # HOG features on or off
+```
+
+
+####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+
+I trained a standard SVM using the scikit learn `sklearn.svm.SVC` module with default parameter. The total data set contained 8792 car samples and 8968 non-car samples. I split the data into trainig and test sets with 90:10 ratio. I used HOG features only, and used the `sklearn.preprocessing.StandardScaler` module to scale the data before feeding on to the SVC program. I managed to achieve a test accuracy of 0.9904, which was pretty impressive.
+
+
+###Sliding Window Search
+
+####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+
+I decided to search using three different box sizes as shown below:
+
+<center><img src="./output_images/3.png" width="800" /> </center>
+
+This was because the cars further away looked smaller and cars nearby looked larger. With variable sized window and search area, the program was able to detect cars more efficiently. With stronger computing power, it is possible to extend the search to full window if requested.
+
+
+
+####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+
+The left column in next figure showed some of the results obtained by the pipeline defined above. Again, the variable-szied window helped the performance of the search.
+
+In an effort to reduce false positves and smooth the result output, I implemented a heat map approach. I used information for 10 frames, and calculated the heat map of all hot boxes. I used `scipy.ndimage.measurements.label()` method to conclude the final output bounding box. 
+
+The mid colunm showd the result of heat map stage, and the right column showd the result of `scipy.ndimage.measurements.label()` on the heat map.
+
+<center><img src="./output_images/4.png" width="1200" /> </center>
+---
+
+### Video Implementation
+Here's a [link to my video result](./project_video_result.mp4). The pipeline wasn't perfect, but worked well most of the time with minimal false positives.
+
+
+
+
+---
+
+###Discussion
+
+####Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+
+Although the pipeline worked most of the time, there are still times it did not work so well. There are several reaons:
+
+1.  Training data is not enough: I used only `GTI vehicle image database`. I could also use `KITTI vision benchmark suite` to include more types of cars.
+
+2. Search area could be larger.
+
+3. I could average over more frames. 
+
+4. I cound use more features other than HOG.
+
+But nevertheless, the pipeline defined in the code proved to be working, with room to improve in the future.
